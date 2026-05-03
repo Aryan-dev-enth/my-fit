@@ -30,29 +30,12 @@ export function calculateBMR(weight: number, height: number, age: number, gender
 }
 
 /**
- * Calculate dynamic activity multiplier based on real workout data
- * Formula: 1.2 + (average_daily_burn / BMR)
- * Clamped between 1.2 (sedentary) and 1.9 (very active)
- * 
- * @param bmr - Basal Metabolic Rate
- * @param averageDailyBurn - Average calories burned from workouts over last 7 days
- * @returns Activity multiplier between 1.2 and 1.9
- */
-export function calculateDynamicActivityMultiplier(bmr: number, averageDailyBurn: number): number {
-  const baseMultiplier = 1.2;
-  const dynamicComponent = averageDailyBurn / bmr;
-  const multiplier = baseMultiplier + dynamicComponent;
-  
-  // Clamp between 1.2 and 1.9
-  return Math.max(1.2, Math.min(1.9, multiplier));
-}
-
-/**
  * Calculate TDEE (Total Daily Energy Expenditure) - maintenance calories
- * Uses dynamic activity multiplier based on real workout data
+ * Always uses sedentary multiplier (1.2) since workouts are logged manually
  */
-export function calculateTDEE(bmr: number, activityMultiplier: number): number {
-  return Math.round(bmr * activityMultiplier);
+export function calculateTDEE(bmr: number): number {
+  const sedentaryMultiplier = 1.2;
+  return Math.round(bmr * sedentaryMultiplier);
 }
 
 /**
@@ -71,39 +54,33 @@ export function calculateAverageDailyBurn(workoutHistory: number[]): number {
 }
 
 /**
- * Calculate maintenance calories based on user profile and workout history
+ * Calculate maintenance calories based on user profile
+ * Uses sedentary multiplier (1.2) since workouts are logged manually
  * 
  * @param profile - User profile (weight, height, age, gender)
- * @param workoutHistory - Array of daily calories burned (last 7 days)
- * @returns Maintenance calories
+ * @returns Maintenance calories (base TDEE)
  */
-export function calculateMaintenanceCalories(profile: UserProfile, workoutHistory: number[] = []): number {
+export function calculateMaintenanceCalories(profile: UserProfile): number {
   const bmr = calculateBMR(profile.weight, profile.height, profile.age, profile.gender);
-  const averageDailyBurn = calculateAverageDailyBurn(workoutHistory);
-  const activityMultiplier = calculateDynamicActivityMultiplier(bmr, averageDailyBurn);
-  return calculateTDEE(bmr, activityMultiplier);
+  return calculateTDEE(bmr);
 }
 
 /**
  * Calculate complete calorie breakdown for a day
- * Uses dynamic activity calculation based on real workout data
+ * Uses sedentary TDEE (1.2) since workouts are logged manually
  * 
  * @param profile - User profile
  * @param consumed - Calories consumed today
  * @param burned - Calories burned today
- * @param workoutHistory - Array of daily calories burned (last 7 days, excluding today)
  * @returns Complete calorie calculation
  */
 export function calculateDailyCalories(
   profile: UserProfile,
   consumed: number,
-  burned: number,
-  workoutHistory: number[] = []
+  burned: number
 ): CalorieCalculation {
   const bmr = calculateBMR(profile.weight, profile.height, profile.age, profile.gender);
-  const averageDailyBurn = calculateAverageDailyBurn(workoutHistory);
-  const activityMultiplier = calculateDynamicActivityMultiplier(bmr, averageDailyBurn);
-  const tdee = calculateTDEE(bmr, activityMultiplier);
+  const tdee = calculateTDEE(bmr);
   const net = consumed - burned;
   const deficit = tdee - net;
 
@@ -114,8 +91,8 @@ export function calculateDailyCalories(
     burned,
     net,
     deficit,
-    activityMultiplier: Math.round(activityMultiplier * 100) / 100, // Round to 2 decimals
-    averageDailyBurn,
+    activityMultiplier: 1.2, // Always sedentary since workouts are manual
+    averageDailyBurn: 0, // Not used anymore
   };
 }
 

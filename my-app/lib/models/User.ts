@@ -7,6 +7,11 @@ export interface IUser {
   age?: number; // in years
   gender?: 'male' | 'female';
   activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  goal?: {
+    targetWeight: number; // in kg
+    targetDate: Date; // when to reach the goal
+    createdAt: Date;
+  };
   createdAt: Date;
 }
 
@@ -39,6 +44,20 @@ const UserSchema = new Schema<IUser>({
     type: String,
     enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
     default: 'moderate',
+  },
+  goal: {
+    targetWeight: {
+      type: Number,
+      min: 30,
+      max: 300,
+    },
+    targetDate: {
+      type: Date,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   createdAt: {
     type: Date,

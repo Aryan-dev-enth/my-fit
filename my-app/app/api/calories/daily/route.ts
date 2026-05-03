@@ -67,31 +67,7 @@ export async function GET(request: NextRequest) {
     const workoutEntries = await WorkoutEntry.find({ userId, date }).lean();
     const totalBurned = workoutEntries.reduce((sum, entry) => sum + entry.caloriesBurned, 0);
 
-    // Get workout history for last 7 days (excluding today) for dynamic activity calculation
-    const targetDate = new Date(date);
-    const sevenDaysAgo = new Date(targetDate);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    // Get all workout entries from last 7 days (excluding today)
-    const historicalWorkouts = await WorkoutEntry.find({
-      userId,
-      date: {
-        $gte: sevenDaysAgo.toISOString().split('T')[0],
-        $lt: date, // Exclude today
-      },
-    }).lean();
-
-    // Group by date and sum calories burned per day
-    const dailyBurnMap = new Map<string, number>();
-    historicalWorkouts.forEach((workout) => {
-      const currentTotal = dailyBurnMap.get(workout.date) || 0;
-      dailyBurnMap.set(workout.date, currentTotal + workout.caloriesBurned);
-    });
-
-    // Convert to array of daily totals
-    const workoutHistory = Array.from(dailyBurnMap.values());
-
-    // Calculate calories using dynamic activity multiplier
+    // Calculate calories using sedentary base TDEE
     const calculation = calculateDailyCalories(
       {
         weight: latestWeight.weight,
@@ -100,19 +76,13 @@ export async function GET(request: NextRequest) {
         gender: user.gender,
       },
       totalConsumed,
-      totalBurned,
-      workoutHistory
+      totalBurned
     );
 
     return NextResponse.json({
       success: true,
       date,
       calculation,
-      debug: {
-        workoutHistoryDays: workoutHistory.length,
-        averageDailyBurn: calculation.averageDailyBurn,
-        activityMultiplier: calculation.activityMultiplier,
-      },
     });
   } catch (error) {
     console.error('Daily calories calculation error:', error);

@@ -65,6 +65,7 @@ export default function WorkoutPage() {
           type: selectedType,
           caloriesBurned: caloriesValue,
           notes: notes.trim() || undefined,
+          date: selectedDate, // Log to the selected date
         }),
       });
 
@@ -155,15 +156,21 @@ export default function WorkoutPage() {
 
       {/* Date Navigation */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <button onClick={() => changeDate(-1)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
             <svg className="w-6 h-6 text-zinc-600 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="text-center">
+          <div className="flex-1 text-center">
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{formatDate(selectedDate)}</h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{selectedDate}</p>
+            <input
+              type="date"
+              value={selectedDate}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="mt-2 px-3 py-1 text-sm text-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
           </div>
           <button onClick={() => changeDate(1)} disabled={isToday} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
             <svg className="w-6 h-6 text-zinc-600 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +182,14 @@ export default function WorkoutPage() {
 
       {/* Log Workout Form */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800">
-        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">Log Workout</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Log Workout</h3>
+          {!isToday && (
+            <span className="text-xs px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
+              Logging to {formatDate(selectedDate)}
+            </span>
+          )}
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Workout Type</label>

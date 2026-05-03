@@ -4,7 +4,8 @@ import { User } from '@/lib/models/User';
 import { WeightEntry } from '@/lib/models/WeightEntry';
 import { FoodEntry } from '@/lib/models/FoodEntry';
 import { WorkoutEntry } from '@/lib/models/WorkoutEntry';
-import { calculateBMR, calculateDynamicActivityMultiplier, calculateTDEE, calculateAverageDailyBurn } from '@/lib/calories';
+import { calculateBMR, calculateTDEE } from '@/lib/calories';
+import { Types } from 'mongoose';
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,11 +66,14 @@ export async function GET(request: NextRequest) {
       dateArray.push(d.toISOString().split('T')[0]);
     }
 
+    // Convert userId to ObjectId
+    const userObjectId = new Types.ObjectId(userId);
+
     // Get food entries for the period
     const foodEntries = await FoodEntry.aggregate([
       {
         $match: {
-          userId: userId,
+          userId: userObjectId,
           date: { $in: dateArray },
         },
       },
@@ -85,7 +89,7 @@ export async function GET(request: NextRequest) {
     const workoutEntries = await WorkoutEntry.aggregate([
       {
         $match: {
-          userId: userId,
+          userId: userObjectId,
           date: { $in: dateArray },
         },
       },
@@ -101,34 +105,29 @@ export async function GET(request: NextRequest) {
     const foodMap = new Map(foodEntries.map(e => [e._id, e.totalCalories]));
     const workoutMap = new Map(workoutEntries.map(e => [e._id, e.totalBurned]));
 
-    // Calculate workout history for dynamic TDEE calculation
-    const workoutHistory = dateArray.map(date => workoutMap.get(date) || 0);
-    
-    // Calculate BMR and dynamic TDEE
+    // Calculate BMR and TDEE using sedentary base
     const bmr = calculateBMR(
       latestWeight.weight,
       user.height,
       user.age,
       user.gender
     );
-    const averageDailyBurn = calculateAverageDailyBurn(workoutHistory);
-    const activityMultiplier = calculateDynamicActivityMultiplier(bmr, averageDailyBurn);
-    const tdee = calculateTDEE(bmr, activityMultiplier);
+    const tdee = calculateTDEE(bmr); // Uses sedentary (1.2) automatically
 
     // Calculate daily deficits
     let totalDeficit = 0;
     const dailyData = dateArray.map(date => {
       const consumed = foodMap.get(date) || 0;
       const burned = workoutMap.get(date) || 0;
-      const net = consumed - burned;
-      const deficit = tdee - net;
+      const budget = tdee + burned; // TDEE + workout calories
+      const deficit = budget - consumed;
       totalDeficit += deficit;
 
       return {
         date,
         consumed,
         burned,
-        net,
+        budget,
         deficit,
       };
     });
@@ -156,8 +155,6 @@ export async function GET(request: NextRequest) {
         avgDailyDeficit,
         tdee,
         bmr,
-        averageDailyBurn,
-        activityMultiplier: Math.round(activityMultiplier * 100) / 100,
         dailyData,
       },
     });

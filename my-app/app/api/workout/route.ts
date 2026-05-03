@@ -4,7 +4,7 @@ import { WorkoutEntry } from '@/lib/models/WorkoutEntry';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, type, caloriesBurned, notes } = await request.json();
+    const { userId, type, caloriesBurned, notes, date: requestDate } = await request.json();
 
     if (!userId || !type || caloriesBurned === undefined) {
       return NextResponse.json(
@@ -29,14 +29,20 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
+    // Use provided date or default to today
+    const date = requestDate || new Date().toISOString().split('T')[0];
+    
+    // Create timestamp for the specified date (use current time on that date)
     const now = new Date();
-    const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const timestamp = requestDate 
+      ? new Date(`${requestDate}T${now.toTimeString().split(' ')[0]}`)
+      : now;
 
     const workoutEntry = await WorkoutEntry.create({
       userId,
       type,
       caloriesBurned,
-      timestamp: now,
+      timestamp,
       date,
       notes: notes?.trim() || undefined,
     });

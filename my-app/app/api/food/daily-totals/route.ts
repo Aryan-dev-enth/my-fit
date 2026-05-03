@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { FoodEntry } from '@/lib/models/FoodEntry';
+import { Types } from 'mongoose';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,12 +19,15 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
+    // Convert userId string to ObjectId
+    const userObjectId = new Types.ObjectId(userId);
+
     if (date) {
       // Get totals for a specific date
       const result = await FoodEntry.aggregate([
         {
           $match: {
-            userId: userId,
+            userId: userObjectId,
             date: date,
           },
         },
@@ -64,7 +68,7 @@ export async function GET(request: NextRequest) {
       const result = await FoodEntry.aggregate([
         {
           $match: {
-            userId: userId,
+            userId: userObjectId,
           },
         },
         {

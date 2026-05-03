@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import InstallPWA from "@/components/InstallPWA";
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -10,8 +11,17 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Fitness Tracker",
+  title: "MyFit Tracker",
   description: "Track your fitness journey",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "MyFit",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -25,7 +35,10 @@ export default function RootLayout({
       className={`${roboto.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-roboto">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <InstallPWA />
+        </AuthProvider>
       </body>
     </html>
   );
