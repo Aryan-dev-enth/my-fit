@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { WorkoutEntry, WorkoutType } from '@/lib/types';
+import { WorkoutEntry, WorkoutType, WorkoutSession, WorkoutPlanType, ExerciseSet } from '@/lib/types';
+import { WORKOUT_TEMPLATES, DEFAULT_WEEKLY_PLAN, getDayName } from '@/lib/workoutTemplates';
 
 const workoutTypes: { value: WorkoutType; label: string; icon: string }[] = [
   { value: 'running', label: 'Running', icon: '🏃' },
@@ -14,8 +15,15 @@ export default function WorkoutPage() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [workoutEntries, setWorkoutEntries] = useState<WorkoutEntry[]>([]);
+  const [currentSession, setCurrentSession] = useState<WorkoutSession | null>(null);
+  const [weekDates, setWeekDates] = useState<Date[]>([]);
+  const [viewMode, setViewMode] = useState<'simple' | 'structured'>('structured');
+  const [showHistory, setShowHistory] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  const [exerciseHistory, setExerciseHistory] = useState<any[]>([]);
+  const [showWorkoutSelector, setShowWorkoutSelector] = useState(false);
 
-  // Form state
+  // Form state for simple logging
   const [selectedType, setSelectedType] = useState<WorkoutType>('running');
   const [caloriesBurned, setCaloriesBurned] = useState('');
   const [notes, setNotes] = useState('');

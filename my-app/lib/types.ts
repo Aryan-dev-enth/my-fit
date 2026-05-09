@@ -84,3 +84,69 @@ export interface DailyWorkoutTotals {
     gym: number;
   };
 }
+
+// New structured workout types
+export type WorkoutPlanType = 
+  | 'chest-triceps'
+  | 'back-biceps'
+  | 'swimming-core'
+  | 'legs-shoulders'
+  | 'swimming-light'
+  | 'plyo-sprints'
+  | 'rest'
+  | 'custom';
+
+export interface ExerciseSet {
+  setNumber: number;
+  completed: boolean;
+  weight?: number; // in kg or lbs
+  reps?: number;
+  notes?: string;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  targetSets: number;
+  targetRepsMin: number;
+  targetRepsMax: number;
+  sets: ExerciseSet[];
+  category?: string; // e.g., 'chest', 'triceps', 'cardio'
+}
+
+export interface WorkoutSession {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  workoutType: WorkoutPlanType;
+  exercises: Exercise[];
+  duration?: number; // in minutes
+  caloriesBurned?: number;
+  notes?: string;
+  completed: boolean;
+  startTime?: string;
+  endTime?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  workoutType: WorkoutPlanType;
+  exercises: Omit<Exercise, 'id' | 'sets'>[];
+  estimatedDuration: number; // in minutes
+  estimatedCaloriesMin: number;
+  estimatedCaloriesMax: number;
+  description?: string;
+}
+
+export interface WeeklyWorkoutPlan {
+  monday: WorkoutPlanType;
+  tuesday: WorkoutPlanType;
+  wednesday: WorkoutPlanType;
+  thursday: WorkoutPlanType;
+  friday: WorkoutPlanType;
+  saturday: WorkoutPlanType;
+  sunday: WorkoutPlanType;
+}
